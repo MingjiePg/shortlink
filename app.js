@@ -1,6 +1,7 @@
 import pg from 'pg';
 
 const { Client } = pg;
+// Test edit: PostgreSQL client configuration
 import express from "express";
 import bodyParser from "body-parser";
 import isBot from "isbot";
