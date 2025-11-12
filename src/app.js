@@ -32,6 +32,28 @@ const SlackApp = new App({
 
 const connectionString = process.env.DATABASE_URL;
 
+
+app.use(express.urlencoded())
+app.use(session({
+  resave: false, // don't save session if unmodified
+  saveUninitialized: false, // don't create session until something stored
+  secret: 'shhhh, very secret'
+}));
+
+// Session-persisted message middleware
+
+app.use(function(req, res, next){
+  var err = req.session.error;
+  var msg = req.session.success;
+  delete req.session.error;
+  delete req.session.success;
+  res.locals.message = '';
+  if (err) res.locals.message = '<p class="msg error">' + err + '</p>';
+  if (msg) res.locals.message = '<p class="msg success">' + msg + '</p>';
+  next();
+});
+
+
 async function connectToDatabase() {
     let attempt = 0;
     const maxRetries = 5;
