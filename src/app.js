@@ -117,16 +117,7 @@ SlackApp.command("/hack.af", async ({ command, ack, respond }) => {
     async function changeSlug(slug, newDestination) {
         newDestination = newDestination.replace(/^[\*_`]+|[\*_`]+$/g, '');
         let existingRes;
-        try {
-            existingRes = await client.query(
-                `SELECT * FROM "Links" WHERE slug = $1`,
-                [slug]
-            );
-        } catch (error) {
-            console.error("Database error during SELECT:", error);
-            throw new Error("Error checking for existing slug");
-        }
-
+        
         const isUpdate = existingRes && existingRes.rowCount > 0;
 
         if (isUpdate) {
@@ -163,7 +154,6 @@ SlackApp.command("/hack.af", async ({ command, ack, respond }) => {
                     ],
                 };
             } catch (error) {
-                console.error("Database error during UPDATE:", error);
                 throw new Error("Error updating the slug");
             }
         } else {
@@ -173,8 +163,6 @@ SlackApp.command("/hack.af", async ({ command, ack, respond }) => {
                     VALUES ($1, $2, $3)`,
                     [Math.random().toString(36).substring(2, 15), slug, newDestination]
                 );
-
-                await insertSlugHistory(slug, newDestination, 'Created', '', command.user_id);
 
                 return {
                     text: `Created! Now hack.club/${slug} goes to ${newDestination}.`,
