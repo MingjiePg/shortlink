@@ -9,7 +9,6 @@ if (graphite == null) {
   throw new Error('Graphite host not configured!')
 }
 
-// Configuration for StatsD metrics reporting
 const options = {
   host: graphite,
   port: 8125,
