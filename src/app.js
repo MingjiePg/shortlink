@@ -1,6 +1,7 @@
 import pg from 'pg';
 
 const { Client } = pg;
+// Test edit: PostgreSQL client configuration
 import express from "express";
 import bodyParser from "body-parser";
 import isBot from "isbot";
@@ -10,7 +11,7 @@ import bolt from "@slack/bolt";
 
 const { App, LogLevel } = bolt;
 import responseTime from "response-time";
-import metrics from './metrics.js';
+import metrics from './utils/metrics.js';
 import { LRUCache } from 'lru-cache';
 import { writeFile } from 'fs/promises';
 import { createReadStream } from 'fs';
@@ -30,6 +31,28 @@ const SlackApp = new App({
 });
 
 const connectionString = process.env.DATABASE_URL;
+
+
+app.use(express.urlencoded())
+app.use(session({
+  resave: false, // don't save session if unmodified
+  saveUninitialized: false, // don't create session until something stored
+  secret: 'shhhh, very secret'
+}));
+
+// Session-persisted message middleware
+
+app.use(function(req, res, next){
+  var err = req.session.error;
+  var msg = req.session.success;
+  delete req.session.error;
+  delete req.session.success;
+  res.locals.message = '';
+  if (err) res.locals.message = '<p class="msg error">' + err + '</p>';
+  if (msg) res.locals.message = '<p class="msg success">' + msg + '</p>';
+  next();
+});
+
 
 async function connectToDatabase() {
     let attempt = 0;
@@ -94,16 +117,7 @@ SlackApp.command("/hack.af", async ({ command, ack, respond }) => {
     async function changeSlug(slug, newDestination) {
         newDestination = newDestination.replace(/^[\*_`]+|[\*_`]+$/g, '');
         let existingRes;
-        try {
-            existingRes = await client.query(
-                `SELECT * FROM "Links" WHERE slug = $1`,
-                [slug]
-            );
-        } catch (error) {
-            console.error("Database error during SELECT:", error);
-            throw new Error("Error checking for existing slug");
-        }
-
+        
         const isUpdate = existingRes && existingRes.rowCount > 0;
 
         if (isUpdate) {
@@ -140,7 +154,6 @@ SlackApp.command("/hack.af", async ({ command, ack, respond }) => {
                     ],
                 };
             } catch (error) {
-                console.error("Database error during UPDATE:", error);
                 throw new Error("Error updating the slug");
             }
         } else {
@@ -150,8 +163,6 @@ SlackApp.command("/hack.af", async ({ command, ack, respond }) => {
                     VALUES ($1, $2, $3)`,
                     [Math.random().toString(36).substring(2, 15), slug, newDestination]
                 );
-
-                await insertSlugHistory(slug, newDestination, 'Created', '', command.user_id);
 
                 return {
                     text: `Created! Now hack.club/${slug} goes to ${newDestination}.`,
