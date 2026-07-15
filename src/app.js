@@ -10,7 +10,7 @@ import bolt from "@slack/bolt";
 
 const { App, LogLevel } = bolt;
 import responseTime from "response-time";
-import metrics from './metrics.js';
+import metrics from './utils/metrics.js';
 import { LRUCache } from 'lru-cache';
 import { writeFile } from 'fs/promises';
 import { createReadStream } from 'fs';
